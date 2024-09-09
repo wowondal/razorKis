@@ -4,9 +4,108 @@
     ViewData["Title"] = "메인 페이지";
 }
 
-<h2>메인 페이지</h2>
-<p>@Model.Username 님, 환영합니다.</p>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">메인 페이지</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">@Model.Username 님, 환영합니다.</p>
+                    <div class="form-group mb-3">
+                        <label for="accountSelect">등록된 계좌</label>
+                        <select class="form-control" id="accountSelect">
+                            @foreach (var account in Model.UserAccounts)
+                            {
+                                <option>@account</option>
+                            }
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="showAccountForm()">계좌 등록</button>
+                    
+                    <br />
+                    <br />
+                    <br />
+                    <form method="post" asp-page-handler="EnrollAccount">
+                        <div class="form-group mb-3">
+                            <label for="accountNo">계좌번호 <font color="red">*</font></label>
+                            <input type="text" class="form-control" id="accountNo" name="accountNo" required />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="appKey">appKey <font color="red">*</font></label>
+                            <input type="text" class="form-control" id="appKey" name="appKey" required />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="appSecret">appSecret <font color="red">*</font></label>
+                            <input type="text" class="form-control" id="appSecret" name="appSecret" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary">등록</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<form method="post" asp-page-handler="Logout">
-    <button type="submit">로그아웃</button>
-</form>
+<!-- 계좌 등록 레이어 -->
+<div id="accountFormLayer" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">계좌 등록</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="hideAccountForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="EnrollAccount">
+                    <div class="form-group mb-3">
+                        <label for="accountNo">계좌번호 <font color="red">*</font></label>
+                        <input type="text" class="form-control" id="accountNo" name="AccountNo" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="appKey">appKey <font color="red">*</font></label>
+                        <input type="text" class="form-control" id="appKey" name="AppKey" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="appSecret">appSecret</label>
+                        <input type="text" class="form-control" id="appSecret" name="AppSecret" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">등록</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showAccountForm() {
+        document.getElementById('accountFormLayer').style.display = 'block';
+    }
+
+    function hideAccountForm() {
+        document.getElementById('accountFormLayer').style.display = 'none';
+    }
+</script>
+
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-dialog {
+        margin: 15% auto;
+        padding: 20px;
+        width: 80%;
+    }
+</style>

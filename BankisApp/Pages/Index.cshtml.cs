@@ -24,7 +24,7 @@ namespace BankisApp.Pages
             else
             {
                 // 쿠키가 없으면 login 페이지로 리다이렉트
-                return RedirectToPage("/Login");
+                return RedirectToPage("/Account/Login");
             }
         }
     }
