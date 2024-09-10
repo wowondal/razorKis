@@ -1,4 +1,5 @@
 ﻿@page
+@using System.Text.Json
 @model MainModel
 @{
     ViewData["Title"] = "메인 페이지";
@@ -15,33 +16,16 @@
                     <p class="card-text">@Model.Username 님, 환영합니다.</p>
                     <div class="form-group mb-3">
                         <label for="accountSelect">등록된 계좌</label>
-                        <select class="form-control" id="accountSelect">
+                        <select class="form-control" id="accountSelect" onchange="selectAccount(this)">
                             @foreach (var account in Model.UserAccounts)
                             {
-                                <option>@account</option>
+                                <option value="@account.AccountNo">@account.AccountNo</option>
                             }
                         </select>
                     </div>
                     <button class="btn btn-primary" onclick="showAccountForm()">계좌 등록</button>
-                    
-                    <br />
-                    <br />
-                    <br />
-                    <form method="post" asp-page-handler="EnrollAccount">
-                        <div class="form-group mb-3">
-                            <label for="accountNo">계좌번호 <font color="red">*</font></label>
-                            <input type="text" class="form-control" id="accountNo" name="accountNo" required />
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="appKey">appKey <font color="red">*</font></label>
-                            <input type="text" class="form-control" id="appKey" name="appKey" required />
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="appSecret">appSecret <font color="red">*</font></label>
-                            <input type="text" class="form-control" id="appSecret" name="appSecret" required />
-                        </div>
-                        <button type="submit" class="btn btn-primary">등록</button>
-                    </form>
+                    <button class="btn btn-secondary" onclick="showEditAccountForm()">계좌 수정</button>
+                    <button class="btn btn-danger" onclick="deleteAccount()">계좌 삭제</button>
                 </div>
             </div>
         </div>
@@ -79,6 +63,39 @@
     </div>
 </div>
 
+<!-- 계좌 수정 레이어 -->
+<div id="editAccountFormLayer" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">계좌 수정</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="hideEditAccountForm()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="EditAccount">
+                    <div class="form-group mb-3">
+                        <label for="editAccountNo">계좌번호 <font color="red">*</font></label>
+                        <input type="text" class="form-control" id="editAccountNo" name="AccountNo" readonly />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="editAppKey">appKey <font color="red">*</font></label>
+                        <input type="text" class="form-control" id="editAppKey" name="AppKey" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="editAppSecret">appSecret</label>
+                        <input type="text" class="form-control" id="editAppSecret" name="AppSecret" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">수정</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<form id="deleteAccountForm" method="post" asp-page-handler="DeleteAccount">
+    <input type="hidden" id="deleteAccountNo" name="AccountNo" />
+</form>
 <script>
     function showAccountForm() {
         document.getElementById('accountFormLayer').style.display = 'block';
@@ -86,6 +103,40 @@
 
     function hideAccountForm() {
         document.getElementById('accountFormLayer').style.display = 'none';
+    }
+
+    function showEditAccountForm() {
+        var selectedAccountNo = document.getElementById('accountSelect').value;
+        if (!selectedAccountNo) {
+            alert('수정할 계좌를 선택하세요.');
+            return;
+        }
+
+        var selectedAccount = @Html.Raw(JsonSerializer.Serialize(Model.UserAccounts))
+                .find(account => account.AccountNo === selectedAccountNo);
+
+        document.getElementById('editAccountNo').value = selectedAccount.AccountNo;
+        document.getElementById('editAppKey').value = selectedAccount.AppKey;
+        document.getElementById('editAppSecret').value = selectedAccount.AppSecret;
+
+        document.getElementById('editAccountFormLayer').style.display = 'block';
+    }
+
+    function hideEditAccountForm() {
+        document.getElementById('editAccountFormLayer').style.display = 'none';
+    }
+
+    function deleteAccount() {
+        var selectedAccountNo = document.getElementById('accountSelect').value;
+        if (!selectedAccountNo) {
+            alert('삭제할 계좌를 선택하세요.');
+            return;
+        }
+
+        if (confirm('정말로 이 계좌를 삭제하시겠습니까?')) {
+            document.getElementById('deleteAccountNo').value = selectedAccountNo;
+            document.getElementById('deleteAccountForm').submit();
+        }
     }
 </script>
 
@@ -109,3 +160,15 @@
         width: 80%;
     }
 </style>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // 서버에서 전달된 오류 메시지를 alert으로 표시
+        @if (Model.Result != null)
+        {
+            <text>
+                alert('@Html.Raw(Model.Result)');
+            </text>
+        }
+    </script>
+}
