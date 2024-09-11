@@ -5,3 +5,7 @@
 /BankisApp/bin/Debug/net8.0
 /BankisApp/obj
 /.vs
+/BankisApp/UserData/aaa/account.txt
+/BankisApp/eFriendOpenAPI/hts.token.D96E5167
+/BankisApp/eFriendOpenAPI/kosdaq_code.mst
+/BankisApp/eFriendOpenAPI/kospi_code.mst

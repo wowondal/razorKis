@@ -3,6 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
 using System.IO;
+using eFriendOpenAPI;
+using eFriendOpenAPI.Packet;
+using eFriendOpenAPI.Extension;
+using System.Security.Principal;
+using System.Text;
+
 
 public class MainModel : PageModel
 {
@@ -21,6 +27,8 @@ public class MainModel : PageModel
     public List<AccountInfo> UserAccounts { get; set; } = new List<AccountInfo>();
 
     public string Result { get; set; }
+
+    public string MyStocks { get; set; }
 
     private string GetAccountFilePath()
     {
@@ -47,13 +55,39 @@ public class MainModel : PageModel
         return filePath;
     }
 
-
     private bool IsAleadyEnrolled(string accountNo)
     {
         return UserAccounts.Any(a => a.AccountNo == accountNo);
     }
 
-    public void OnGet()
+    private void LoadUserAccounts()
+    {
+        UserAccounts.Clear();
+
+        var accountFilePath = GetAccountFilePath();
+        if (System.IO.File.Exists(accountFilePath))
+        {
+            foreach (var line in System.IO.File.ReadAllLines(accountFilePath))
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                try
+                {
+                    var account = JsonSerializer.Deserialize<AccountInfo>(line);
+                    if (account != null && account.Username == Username)
+                    {
+                        UserAccounts.Add(account);
+                    }
+                }
+                catch (JsonException je)
+                {
+                    TempData["Result"] = $"JSON 파싱 중 오류 발생({je.Message})";
+                    break;
+                }
+            }
+        }
+    }
+
+    private void Init()
     {
         // 초기화 코드
         Username = Request.Cookies["LoginCookie"]?.ToString();
@@ -64,6 +98,11 @@ public class MainModel : PageModel
 
         // 사용자 계좌 정보를 로드합니다.
         LoadUserAccounts();
+    }
+
+    public void OnGet()
+    {
+        Init();
 
         // TempData에서 결과 메시지를 가져옵니다.
         if (TempData.ContainsKey("Result"))
@@ -171,30 +210,78 @@ public class MainModel : PageModel
         return RedirectToPage();
     }
 
-    private void LoadUserAccounts()
+    public async Task<IActionResult> OnPostGenerateToken(string accountNo, string appKey, string appSecret)
     {
-        UserAccounts.Clear();
+        bool isVTS = false; // true: 모의 Domain, false: 실전 Domain
+        eFriendClient client = new eFriendClient(isVTS, appKey, appSecret, accountNo);
 
-        var accountFilePath = GetAccountFilePath();
-        if (System.IO.File.Exists(accountFilePath))
+        string kisDirectory = Path.Combine(Directory.GetCurrentDirectory(), "eFriendOpenAPI");
+        await client.LoadKospiMasterCode(kisDirectory);
+        await client.LoadKosdaqiMasterCode(kisDirectory);
+
+        if (await client.CheckAccessToken() == false)
         {
-            foreach(var line in System.IO.File.ReadAllLines(accountFilePath))
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                try
-                {
-                    var account = JsonSerializer.Deserialize<AccountInfo>(line);
-                    if (account != null && account.Username == Username)
-                    {
-                        UserAccounts.Add(account);
-                    }
-                }
-                catch (JsonException je)
-                {
-                    TempData["Result"] = $"JSON 파싱 중 오류 발생({je.Message})";
-                    break;
-                }
-            }
+            TempData["Result"] = "Failed to get AccessToken";
+            return RedirectToPage();
         }
+
+        // 결과 처리
+        TempData["Result"] = "토큰이 성공적으로 생성되었습니다.";
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostShowMyStocks(string accountNo, string appKey, string appSecret)
+    {
+        bool isVTS = false; // true: 모의 Domain, false: 실전 Domain
+        eFriendClient client = new eFriendClient(isVTS, appKey, appSecret, accountNo);
+
+        string kisDirectory = Path.Combine(Directory.GetCurrentDirectory(), "eFriendOpenAPI");
+        await client.LoadKospiMasterCode(kisDirectory);
+        await client.LoadKosdaqiMasterCode(kisDirectory);
+
+        if (await client.CheckAccessToken() == false)
+        {
+            TempData["Result"] = "AccessToken 이 없습니다.";
+            return RedirectToPage();
+        }
+
+        // 보유 주식 조회
+        var array = await client.주식잔고조회();
+        if (array == null)
+        {
+            TempData["Result"] = "보유 주식이 없습니다.";
+            return RedirectToPage();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        foreach (주식잔고조회DTO? dto in array)
+        {
+            if (dto?.evlu_pfls_amt.ToMoney() > 0) 
+            {
+                sb.Append("<tr class=\"text-danger\">");
+            }
+            else
+            {
+                sb.Append("<tr>");
+            }
+            sb.Append($"<td>{dto?.pdno}</td>");
+            sb.Append($"<td>{dto?.prdt_name}</td>");
+            sb.Append($"<td>{dto?.prpr.ToMoney().ToString("#,#")}</td>");
+            sb.Append($"<td>{dto?.pchs_avg_pric.ToMoney().ToString("#,#")}</td>");
+            sb.Append($"<td>{dto?.hldg_qty}</td>");
+            sb.Append($"<td>{dto?.pchs_amt}</td>");
+            sb.Append($"<td>{dto?.evlu_pfls_amt}</td>");
+            sb.Append($"</tr>");
+
+            //sb.Append($"<li>{dto}");
+            //var 시세 = await client.주식현재가시세(dto.pdno);
+            //sb.Append($", 현재가={시세?.stck_prpr.ToMoney():n0}");
+        }
+
+        MyStocks = sb.ToString();
+
+        Init();
+
+        return Page();
     }
 }
