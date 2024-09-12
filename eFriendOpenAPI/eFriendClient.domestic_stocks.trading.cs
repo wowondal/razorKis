@@ -177,15 +177,17 @@ partial class eFriendClient
 
     // https://apiportal.koreainvestment.com/apiservice/apiservice-domestic-stock
     // 주식잔고조회[v1_국내주식-006]
-    public async Task<주식잔고조회DTO[]> 주식잔고조회()
+    public async Task<주식잔고조회DTO[]> 주식잔고조회(string trCont = "", string ctx_area_fk100 = "", string ctx_area_nk100 = "")
     {
         string trId = _isVTS ? "VTTC8434R" : "TTTC8434R";
-        using var client = NewHttp(trId);
+        using var client = NewHttp(trId, trCont);
 
         주식잔고조회Query query = new()
         {
             CANO = this._account.CANO,
             ACNT_PRDT_CD = this._account.ACNT_PRDT_CD,
+            CTX_AREA_FK100 = ctx_area_fk100,
+            CTX_AREA_NK100 = ctx_area_nk100
         };
 
         string url = "/uapi/domestic-stock/v1/trading/inquire-balance?" + WebSerializer.ToQueryString(query);
@@ -195,7 +197,20 @@ partial class eFriendClient
         if (response.IsSuccessStatusCode)
         {
             var respBody = await response.Content.ReadFromJsonAsync<PacketResponses<주식잔고조회DTO>>();
-            return respBody?.output1 ?? Array.Empty<주식잔고조회DTO>();
+            var result = respBody?.output1 ?? Array.Empty<주식잔고조회DTO>();
+
+            response.Headers.TryGetValues("tr_cont", out var respTrCont);
+            if (respTrCont != null && (respTrCont.Contains("F") || respTrCont.Contains("M")))
+            {
+                var CtxAreaFk100 = respBody?.ctx_area_fk100;
+                var CtxAreaNk100 = respBody?.ctx_area_nk100;
+                if (!string.IsNullOrEmpty(CtxAreaFk100) && !string.IsNullOrEmpty(CtxAreaNk100))
+                {
+                    var nextResults = await 주식잔고조회("N", CtxAreaFk100, CtxAreaNk100);
+                    result = result.Concat(nextResults).ToArray();
+                }
+            }
+            return result;
         }
 
         return Array.Empty<주식잔고조회DTO>();

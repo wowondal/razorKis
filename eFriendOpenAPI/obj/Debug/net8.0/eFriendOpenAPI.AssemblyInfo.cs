@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("C# Wrapper classes for eFriend Expert (OpenAPI version)")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.9.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.9+4b04fc0a94661d55cf8e657ef600c0450eb4c6a5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.9+027905069b39613924117e56310b567a754be749")]
 [assembly: System.Reflection.AssemblyProductAttribute("eFriendOpenAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("eFriendOpenAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.9.0")]

@@ -86,7 +86,7 @@ public partial class eFriendClient
 
             if (string.IsNullOrEmpty(tr_cont) == false)
             {
-                client.DefaultRequestHeaders.Add("tr_cont", "");
+                client.DefaultRequestHeaders.Add("tr_cont", tr_cont);
             }
 
             client.DefaultRequestHeaders.Add("custtype", _isLegalPerson ? "B" : "P");

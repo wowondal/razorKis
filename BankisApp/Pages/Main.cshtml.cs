@@ -232,6 +232,12 @@ public class MainModel : PageModel
 
     public async Task<IActionResult> OnPostShowMyStocks(string accountNo, string appKey, string appSecret)
     {
+        if (string.IsNullOrWhiteSpace(accountNo) || string.IsNullOrWhiteSpace(appKey) || string.IsNullOrWhiteSpace(appSecret))
+        {
+            TempData["Result"] = "계좌 정보를 입력해주세요.";
+            return RedirectToPage();
+        }
+
         bool isVTS = false; // true: 모의 Domain, false: 실전 Domain
         eFriendClient client = new eFriendClient(isVTS, appKey, appSecret, accountNo);
 
@@ -254,23 +260,25 @@ public class MainModel : PageModel
         }
 
         StringBuilder sb = new StringBuilder();
+        int i = 0;
         foreach (주식잔고조회DTO? dto in array)
         {
-            if (dto?.evlu_pfls_amt.ToMoney() > 0) 
+            if (dto?.evlu_pfls_amt.ToMoney() > 0)
             {
-                sb.Append("<tr class=\"text-danger\">");
+                sb.Append("<tr class='highlight'>");
             }
             else
             {
                 sb.Append("<tr>");
             }
+            sb.Append($"<td>{++i}</td>");
             sb.Append($"<td>{dto?.pdno}</td>");
             sb.Append($"<td>{dto?.prdt_name}</td>");
             sb.Append($"<td>{dto?.prpr.ToMoney().ToString("#,#")}</td>");
             sb.Append($"<td>{dto?.pchs_avg_pric.ToMoney().ToString("#,#")}</td>");
             sb.Append($"<td>{dto?.hldg_qty}</td>");
-            sb.Append($"<td>{dto?.pchs_amt}</td>");
-            sb.Append($"<td>{dto?.evlu_pfls_amt}</td>");
+            sb.Append($"<td>{dto?.pchs_amt.ToMoney().ToString("#,#")}</td>");
+            sb.Append($"<td>{dto?.evlu_pfls_amt.ToMoney().ToString("#,#")}</td>");
             sb.Append($"</tr>");
 
             //sb.Append($"<li>{dto}");

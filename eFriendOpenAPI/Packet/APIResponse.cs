@@ -33,6 +33,10 @@ public class PacketResponses<T>
     public string msg_cd { get; set; } = ""; // 응답코드
     [JsonPropertyName("msg1")]
     public string msg1 { get; set; } = ""; // 응답메세지
+    [JsonPropertyName("ctx_area_nk100")]
+    public string ctx_area_nk100 { get; set; } = ""; // 연속조회키100
+    [JsonPropertyName("ctx_area_fk100")]
+    public string ctx_area_fk100 { get; set; } = ""; // 연속조회검색조건100
 
     public T[]? output1 { get; set; }
 }
