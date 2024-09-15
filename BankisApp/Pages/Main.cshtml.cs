@@ -12,6 +12,7 @@ using System.Text;
 
 public class MainModel : PageModel
 {
+    #region properties
     [BindProperty]
     public string Username { get; set; }
 
@@ -29,6 +30,11 @@ public class MainModel : PageModel
     public string Result { get; set; }
 
     public string MyStocks { get; set; }
+
+    public Dictionary<string, KOSPICode> KospiList { get; set; }
+
+    public Dictionary<string, KOSDAQCode> KosdaqList { get; set; }
+    #endregion
 
     private string GetAccountFilePath()
     {
@@ -230,6 +236,20 @@ public class MainModel : PageModel
         return RedirectToPage();
     }
 
+    public async Task<IActionResult> OnPostGetStockList(string accountNo, string appKey, string appSecret)
+    {
+        bool isVTS = false; // true: 모의 Domain, false: 실전 Domain
+        eFriendClient client = new eFriendClient(isVTS, appKey, appSecret, accountNo);
+
+        string kisDirectory = Path.Combine(Directory.GetCurrentDirectory(), "eFriendOpenAPI");
+        KospiList = await client.LoadKospiMasterCode(kisDirectory);
+        KosdaqList = await client.LoadKosdaqiMasterCode(kisDirectory);
+
+        Init();
+
+        return Page();
+    }
+
     public async Task<IActionResult> OnPostShowMyStocks(string accountNo, string appKey, string appSecret)
     {
         if (string.IsNullOrWhiteSpace(accountNo) || string.IsNullOrWhiteSpace(appKey) || string.IsNullOrWhiteSpace(appSecret))
@@ -279,6 +299,7 @@ public class MainModel : PageModel
             sb.Append($"<td>{dto?.hldg_qty}</td>");
             sb.Append($"<td>{dto?.pchs_amt.ToMoney().ToString("#,#")}</td>");
             sb.Append($"<td>{dto?.evlu_pfls_amt.ToMoney().ToString("#,#")}</td>");
+            sb.Append($"<td>{dto?.evlu_pfls_rt.ToMoney().ToString("#,#")}</td>");
             sb.Append($"</tr>");
 
             //sb.Append($"<li>{dto}");

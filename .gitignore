@@ -9,3 +9,7 @@
 /BankisApp/eFriendOpenAPI/hts.token.D96E5167
 /BankisApp/eFriendOpenAPI/kosdaq_code.mst
 /BankisApp/eFriendOpenAPI/kospi_code.mst
+
+eFriendOpenAPI/bin/
+
+eFriendOpenAPI/obj/
