@@ -34,6 +34,8 @@ public class MainModel : PageModel
     public Dictionary<string, KOSPICode> KospiList { get; set; }
 
     public Dictionary<string, KOSDAQCode> KosdaqList { get; set; }
+
+    public List<StockInfo> MyStockList { get; set; } = new List<StockInfo>();
     #endregion
 
     private string GetAccountFilePath()
@@ -250,16 +252,16 @@ public class MainModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostShowMyStocks(string accountNo, string appKey, string appSecret)
+    public async Task<IActionResult> OnPostShowMyStocksAsync(string accountNo1, string appKey1, string appSecret1)
     {
-        if (string.IsNullOrWhiteSpace(accountNo) || string.IsNullOrWhiteSpace(appKey) || string.IsNullOrWhiteSpace(appSecret))
+        if (string.IsNullOrWhiteSpace(accountNo1) || string.IsNullOrWhiteSpace(appKey1) || string.IsNullOrWhiteSpace(appSecret1))
         {
             TempData["Result"] = "계좌 정보를 입력해주세요.";
             return RedirectToPage();
         }
 
         bool isVTS = false; // true: 모의 Domain, false: 실전 Domain
-        eFriendClient client = new eFriendClient(isVTS, appKey, appSecret, accountNo);
+        eFriendClient client = new eFriendClient(isVTS, appKey1, appSecret1, accountNo1);
 
         string kisDirectory = Path.Combine(Directory.GetCurrentDirectory(), "eFriendOpenAPI");
         await client.LoadKospiMasterCode(kisDirectory);
@@ -279,6 +281,7 @@ public class MainModel : PageModel
             return RedirectToPage();
         }
 
+        /*
         StringBuilder sb = new StringBuilder();
         int i = 0;
         foreach (주식잔고조회DTO? dto in array)
@@ -312,5 +315,24 @@ public class MainModel : PageModel
         Init();
 
         return Page();
+        */
+
+        foreach (주식잔고조회DTO? dto in array)
+        {
+
+            MyStockList.Add(new StockInfo
+            {
+                Code = dto?.pdno,
+                Name = dto?.prdt_name,
+                CurrentPrice = dto?.prpr.ToMoney().ToString("#,#"),
+                AveragePrice = dto?.pchs_avg_pric.ToMoney().ToString("#,#"),
+                Quantity = dto?.hldg_qty,
+                TotalPurchasePrice = dto?.pchs_amt.ToMoney().ToString("#,#"),
+                ProfitLoss = dto?.evlu_pfls_amt.ToMoney().ToString("#,#"),
+                ProfitLossRate = dto?.evlu_pfls_rt.ToMoney().ToString("#,#")
+            });
+        }
+
+        return Partial("_StockTable", MyStockList);
     }
 }

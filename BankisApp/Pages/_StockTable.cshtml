@@ -1,0 +1,37 @@
+﻿@model List<StockInfo>
+<table class="table table-striped table-bordered table-hover" id="stockTable">
+    <thead class="thead-dark">
+        <tr>
+            <th>No</th>
+            <th>코드번호</th>
+            <th>종목명</th>
+            <th>현재가</th>
+            <th>평단가</th>
+            <th>보유수량</th>
+            <th>총매입가</th>
+            <th>평가손익</th>
+            <th>평가손익률</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int i = 0;
+        }
+        
+        @foreach (var stock in Model)
+        {
+            <tr>
+                <td>@(++i)</td>
+                <td>@stock.Code</td>
+                <td>@stock.Name</td>
+                <td>@stock.CurrentPrice</td>
+                <td>@stock.AveragePrice</td>
+                <td>@stock.Quantity</td>
+                <td>@stock.TotalPurchasePrice</td>
+                <td>@stock.ProfitLoss</td>
+                <td>@stock.ProfitLossRate</td>
+            </tr>
+        }
+        
+    </tbody>
+</table>
